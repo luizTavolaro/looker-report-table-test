@@ -267,7 +267,27 @@ const buildReportTable = function (
       //   )
       // )
       .enter();
+      
+    const getHeatmapColor = function(value, min, max) {
+      if (isNaN(value)) return '#ffffff'; // Se não for número, retorna branco
+    
+      const percent = (value - min) / (max - min); // Normaliza o valor entre 0 e 1
+      const r = Math.floor(255 - percent * 150); // Vermelho diminui com o valor
+      const g = Math.floor(255 - percent * 50); // Verde diminui menos
+      const b = Math.floor(255); // Azul fixo
+    
+      return `rgb(${r}, ${g}, ${b})`;
+    };
 
+    const values = dataTable.getDataRows().flatMap(row => 
+      dataTable.getTableRowColumns(row)
+        .map(column => row.data[column.id].value)
+        .filter(value => !isNaN(value))
+    );
+    
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+      
     table_rows
       .append('td')
       .text(d => {
@@ -296,6 +316,8 @@ const buildReportTable = function (
         text = String(text);
         return text ? text.replace('-', '\u2011') : text; // prevents wrapping on minus sign / hyphen
       })
+      .style('background-color', d => getHeatmapColor(d.value, minValue, maxValue))
+      .style('color', d => (isNaN(d.value) ? '#000' : '#fff'))
       .attr('rowspan', d => d.rowspan)
       .attr('colspan', d => d.colspan)
       .style('text-align', d => d.align)
